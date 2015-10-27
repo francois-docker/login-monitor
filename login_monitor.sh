@@ -22,6 +22,7 @@ do
             echo "The mail regarding ip: $IP is being sent"
             sendmail $IP
             sleep 3
+            echo $IP >> $ALREADY_SENT_IPS
         fi
     fi
 done
