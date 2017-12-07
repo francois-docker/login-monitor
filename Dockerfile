@@ -9,5 +9,8 @@ heirloom-mailx \
 COPY login_monitor.sh /root/login_monitor.sh
 RUN chmod +x /root/login_monitor.sh
 
+COPY wait-for-it.sh /root/wait-for-it.sh
+RUN chmod +x /root/wait-for-it.sh
+
 CMD ["/root/login_monitor.sh"]
 

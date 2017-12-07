@@ -14,3 +14,11 @@ monitor successfull login from unknown ip
 ```
 docker run -ti --rm -v /var/log/auth.log:/root/log/auth.log -v ~/login-monitor/authorized_ips.list:/root/authorized_ips.list -v ~/login-monitor/already_sent.list:/root/already_sent.list -e SMTP_HOST=IPADDRESS -e EMAIL_ADDR=admin@domain.tld francois/login-monitor:latest
 ```
+
+## Docker-compose
+The stack will run a smtp container and the login monitor container
+create a .env file to provide environment variable for the stack - you can use the .env.sample as a model
+
+```
+docker-compose -f ~/login-monitor/docker-compose.yml up --abort-on-container-exit; docker-compose -f ~/login-monitor/docker-compose.yml rm -f;
+```
