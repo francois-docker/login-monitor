@@ -1,9 +1,9 @@
 #! /bin/bash
 function sendmail {
     export SUBJECT=ATTENTION: Login from unknown ip
-    export SMTP=SMTP_HOST:25
-    export EMAIL=EMAIL_ADDR
-    echo "WARNING: The unauthorised address ip: $1 has successfully login on your server" | mailx -S smtp=$SMTP -s "$SUBJECT" "$EMAIL"
+    export SMTP=${SMTP_HOST}:25
+    export EMAIL=${EMAIL_ADDR}
+    echo "WARNING: The unauthorised address ip: $1 has successfully login on your server" | heirloom-mailx -S smtp=$SMTP -s "$SUBJECT" "$EMAIL"
 }
 
 AUTHORIZED_IPS="/root/authorized_ips.list"
