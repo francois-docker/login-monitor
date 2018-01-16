@@ -1,26 +1,26 @@
 #! /bin/bash
-function sendmail {
-    export SUBJECT=ATTENTION: Login from unknown ip
-    export SMTP=${SMTP_HOST}:25
-    export EMAIL=${EMAIL_ADDR}
-    echo "WARNING: The unauthorised address ip: $1 has successfully login on your server" | heirloom-mailx -S smtp=$SMTP -s "$SUBJECT" "$EMAIL"
+function send_notif {
+    TITLE="Warning - Connection from unknown IP"
+    BODY="The IP address $1 succesfully logged in on you server"
+    DATA='{"body": "'${BODY}'","title": "Warning - Connection from unknown IP","type":"note"}'
+
+    curl -L --header "Access-Token: ${APITOKEN}" --header 'Content-Type: application/json' --data-binary "${DATA}" --request POST https://api.pushbullet.com/v2/pushes
+    if [ $? -eq 0 ]; then
+        return 0
+    else
+	return 1
+    fi
 }
 
 AUTHORIZED_IPS="/root/authorized_ips.list"
 ALREADY_SENT_IPS="/root/already_sent.list"
 LOG_FILE="/root/log/auth.log"
-FOUND_IPS=`cat $LOG_FILE | grep -i accepted | cut -d " " -f 12 | uniq`
+FOUND_IPS=`cat $LOG_FILE | grep -i accepted | awk '{print $11}' | sort | uniq`
 
-if [[ ! -v SMTP_HOST ]]; then
-    echo "You need to provide an external SMTP host for this container to be able to operate
-        ie: docker run -e SMTP_HOST=IPADDRESS -v ... francois/login-monitor"
+if [[ ! -v APITOKEN ]]; then
+    echo "You need to provide a pushbullet API token for this container to be able to operate
+        ie: docker run -e APITOKEN=<token> -v ... francois/login-monitor"
     exit 1
-fi
-
-if [[ ! -v EMAIL_ADDR ]]; then
-echo "You need to provide a destination email address
-    ie: docker run -e EMAIL_ADDR=admin@domain.tld -v ... francois/login-monitor"
-        exit 1
 fi
 
 for IP in $FOUND_IPS
@@ -31,10 +31,17 @@ do
 
         #If the ip address has not laready be signaled by mail
         if ! grep -Fxq "$IP" "$ALREADY_SENT_IPS"; then
-            echo "The mail regarding ip: $IP is being sent"
-            sendmail $IP
-            sleep 3
-            echo $IP >> $ALREADY_SENT_IPS
+            echo "The notification regarding ip: $IP is being sent"
+            send_notif $IP
+	    if [ $? -eq 0 ]; then
+		echo "Adding IP to already_sent_list"
+                echo $IP >> $ALREADY_SENT_IPS
+	    else
+		echo "Erreur lors de l'envoi de la notification"
+		exit 1
+            fi
+	else
+            echo "This IP has already be signaled - Exiting..."
         fi
     fi
 done
